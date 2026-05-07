@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recipe Categories</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    text-align: center;
+    background: url('food2.avif') no-repeat center center fixed;
+    background-size: cover;
+    position: relative;
+    color: #000;
+    transition: color 0.3s;
+  }
+
+  body::after {
+    content: "";
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(255,255,255,0.2);
+    pointer-events: none;
+    z-index: 0;
+    transition: background-color 0.3s;
+  }
+
+  body > * { position: relative; z-index: 1; }
+
+  h1 {
+    margin: 20px 0;
+    color: #fff;
+    text-shadow: 2px 2px 5px rgba(0,0,0,0.6);
+  }
+
+  .categories {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 20px;
+    justify-content: center;
+    margin-top: 40px;
+  }
+
+  .category {
+    position: relative;
+    width: 180px;
+    height: 180px;
+    border-radius: 15px;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+
+  .category img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s;
+  }
+
+  .category:hover img { transform: scale(1.05); }
+
+  .category h3 {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    margin: 0;
+    padding: 10px 0;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    font-size: 1.1em;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
+  }
+
+  .favorites, .surprise {
+    margin-top: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 12px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+    transition: transform 0.3s, box-shadow 0.3s, background 0.3s;
+  }
+
+  .favorites {
+    width: 200px; height: 80px; background: rgba(255,255,255,0.85);
+  }
+
+  .favorites img { width:50px;height:50px; margin-right:10px; }
+
+  .favorites h3 { margin:0; font-size:1em; color:#000; }
+
+  .favorites:hover { transform:scale(1.05); box-shadow:0 10px 20px rgba(0,0,0,0.4); }
+
+  .surprise { width:220px; height:70px; background:#ffcc66; font-weight:bold; font-size:1.1em; color:#000; }
+
+  .surprise:hover { transform:scale(1.05); box-shadow:0 10px 20px rgba(0,0,0,0.4); background:#ffdd88; }
+
+  /* Info & Settings Box */
+  #info-box {
+    position: fixed;
+    top: 20px; right: 20px;
+    background: rgba(0,0,0,0.7); color:white;
+    padding:10px 15px; border-radius:10px;
+    cursor:pointer; z-index: 20;
+  }
+
+  #info-panel {
+    position: fixed;
+    top: 60px; right: 20px;
+    background: rgba(255,255,255,0.95); color:black;
+    padding:20px; border-radius:10px;
+    box-shadow:0 4px 15px rgba(0,0,0,0.3);
+    display:none; width:250px; z-index:20;
+  }
+
+  #info-panel h3 { margin:10px 0 5px; }
+  #info-panel p { margin:5px 0 15px; font-size:0.9em; }
+  #close-info { margin-top:10px; padding:5px 10px; border:none; background:#4CAF50; color:white; border-radius:5px; cursor:pointer; }
+
+  /* 🌙 Transparent Dark Mode */
+  .dark-mode::after {
+    background-color: rgba(0,0,0,0.4) !important; /* semi-transparent dark */
+  }
+
+  .dark-mode h1 { color: #ffcc00 !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.7); }
+  .dark-mode .favorites { background: rgba(50,50,50,0.8) !important; color: #fff; }
+  .dark-mode .surprise { background: rgba(80,80,80,0.8) !important; color: #fff; }
+  .dark-mode #info-box { background: #333 !important; }
+  .dark-mode #info-panel { background: #222 !important; color: #fff; }
+</style>
+</head>
+<body>
+
+<!-- 🌙☀️ Theme Toggle (Top-Left) -->
+<button id="themeToggle" style="
+  position: fixed; top: 20px; left: 20px;
+  padding: 10px; border-radius: 50%;
+  border: none; background: #444; color: white;
+  cursor: pointer; z-index: 30; font-size: 18px;
+">
+  🌙
+</button>
+
+<h1>🍽️ Choose a Category</h1>
+<div class="categories">
+  <div class="category" onclick="playClick(); openCategory('breakfast')">
+    <img src="breakfast.webp" alt="Breakfast"><h3>Breakfast</h3>
+  </div>
+  <div class="category" onclick="playClick(); openCategory('lunch')">
+    <img src="lunch.jpg" alt="Lunch"><h3>Lunch</h3>
+  </div>
+  <div class="category" onclick="playClick(); openCategory('dinner')">
+    <img src="dinner.jpg" alt="Dinner"><h3>Dinner</h3>
+  </div>
+  <div class="category" onclick="playClick(); openCategory('snacks')">
+    <img src="snack.jpg" alt="Snacks"><h3>Snacks</h3>
+  </div>
+  <div class="category" onclick="playClick(); openCategory('dessert')">
+    <img src="dessert.jpg" alt="Dessert"><h3>Dessert</h3>
+  </div>
+</div>
+
+<div class="favorites" onclick="playClick(); openFavorites()">
+  <img src="favorites.jpg" alt="Favorites"><h3>Favorites</h3>
+</div>
+
+<div class="surprise" onclick="playClick(); openGame()">🎉 Surprise Me! 🎉</div>
+
+<!-- Info & Settings -->
+<div id="info-box">⚙ Info & Settings</div>
+<div id="info-panel">
+  <h3>About Website</h3>
+  <p>This website helps you explore recipes and play fun random recipe games!</p>
+  <h3>Publisher</h3>
+  <p>Suganthi R</p>
+  <h3>Sound Settings</h3>
+  <label><input type="checkbox" id="toggle-sound" checked> Music / Sound Effects</label>
+  <button id="close-info">Close</button>
+</div>
+
+<audio id="clickSound" src="click.mp3" preload="auto"></audio>
+
+<script>
+const infoBox = document.getElementById('info-box');
+const infoPanel = document.getElementById('info-panel');
+const closeInfo = document.getElementById('close-info');
+const toggleSound = document.getElementById('toggle-sound');
+
+let soundEnabled = true;
+
+infoBox.onclick = () => { infoPanel.style.display = infoPanel.style.display==='block'?'none':'block'; }
+closeInfo.onclick = () => { infoPanel.style.display = 'none'; }
+toggleSound.onchange = () => { soundEnabled = toggleSound.checked; }
+
+function playClick() {
+  if(!soundEnabled) return;
+  const sound = document.getElementById("clickSound");
+  sound.currentTime = 0;
+  sound.play();
+}
+
+function openCategory(cat) { window.location.href = cat+".html"; }
+function openFavorites() { window.location.href = "favorites.html"; }
+function openGame() { window.location.href = "random-game.html"; }
+
+/* 🌙 Transparent Dark Mode */
+const toggleBtn = document.getElementById("themeToggle");
+
+// Load theme from localStorage
+if(localStorage.getItem("theme") === "dark") {
+  document.body.classList.add("dark-mode");
+  toggleBtn.textContent = "☀️";
+  toggleBtn.style.background = "#f4f4f4";
+  toggleBtn.style.color = "#000";
+}
+
+toggleBtn.addEventListener("click", () => {
+  document.body.classList.toggle("dark-mode");
+  if (document.body.classList.contains("dark-mode")) {
+    toggleBtn.textContent = "☀️";
+    toggleBtn.style.background = "#f4f4f4";
+    toggleBtn.style.color = "#000";
+    localStorage.setItem("theme", "dark");
+  } else {
+    toggleBtn.textContent = "🌙";
+    toggleBtn.style.background = "#444";
+    toggleBtn.style.color = "white";
+    localStorage.setItem("theme", "light");
+  }
+});
+</script>
+</body>
+</html>

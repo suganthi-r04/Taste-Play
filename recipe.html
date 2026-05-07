@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recipe Details</title>
+<link rel="stylesheet" href="style.css">
+<style>
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  min-height: 100vh;
+  text-align: center;
+  background: url('food3.jpg') no-repeat center center fixed;
+  background-size: cover;
+  position: relative;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  backdrop-filter: blur(5px);
+  background-color: rgba(255, 255, 255, 0.15);
+  pointer-events: none;
+  z-index: 0;
+}
+
+body > * {
+  position: relative;
+  z-index: 1;
+}
+
+.container {
+  background: rgba(255, 255, 255, 0.85);
+  padding: 25px 30px;
+  border-radius: 12px;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+  max-width: 600px;
+  width: 90%;
+  position: relative;
+}
+
+h1, h2, li, p {
+  margin: 10px 0;
+}
+
+.description {
+  background: #fff3f3;
+  padding: 15px;
+  border-radius: 8px;
+  margin-top: 15px;
+  text-align: justify;
+}
+
+.btn {
+  padding: 10px 20px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.btn:hover {
+  background-color: #45a049;
+}
+
+#favorite-btn {
+  font-size: 32px;
+  cursor: pointer;
+  margin-left: 10px;
+  vertical-align: middle;
+  color: gray;
+  transition: color 0.3s, transform 0.2s;
+}
+
+#favorite-btn.favorited {
+  color: red;
+}
+
+#favorite-btn:hover {
+  transform: scale(1.2);
+}
+
+/* Transparent Dark Mode Overlay */
+.dark-mode::before {
+  background-color: rgba(0,0,0,0.4);
+  filter: blur(5px) brightness(0.6);
+}
+
+.dark-mode h1 { color: #ffcc00; text-shadow: 1px 1px 2px rgba(0,0,0,0.7); }
+.dark-mode .item { background: rgba(50,50,50,0.8); color: #fff; }
+.dark-mode .item:hover { background: rgba(70,70,70,0.85); }
+.dark-mode a { color: #ffcc00; text-shadow: 1px 1px 2px rgba(0,0,0,0.7); }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1 id="recipe-title">
+    <span id="recipe-name">Recipe Name</span>
+    <span id="favorite-btn" title="Add to Favorites">🤍</span>
+  </h1>
+
+  <h2>Ingredients:</h2>
+  <ul id="ingredients"></ul>
+
+  <h2>Steps:</h2>
+  <ol id="steps"></ol>
+
+  <div id="description" class="description"></div>
+
+
+<button id="download-pdf-btn">Download PDF</button>
+
+
+  <button onclick="goHome()" class="btn">⬅ Back to Main Page</button>
+</div>
+
+<!-- Click Sound -->
+<audio id="click-sound" src="click.mp3" preload="auto"></audio>
+
+
+
+
+<script>
+// Play click sound
+function playClick() {
+  const sound = document.getElementById("click-sound");
+  sound.currentTime = 0;
+  sound.play();
+}
+
+// ------------------- RECIPE DATA -------------------
+const recipes = {
+  pancakes: { title: "Pancakes", ingredients: ["1 cup flour","2 eggs","1 cup milk","Sugar","Butter"], steps:["Mix all ingredients","Cook on pan","Serve hot with syrup"], description: "Fluffy pancakes that melt in your mouth.\nPerfect for a sweet morning.\nPair with maple syrup and fruits." },
+  omelette: { title: "Omelette", ingredients: ["2 eggs","Salt","Pepper","Oil"], steps:["Beat eggs","Pour into pan","Cook and fold"], description: "A classic breakfast staple.\nProtein-rich and satisfying.\nAdd veggies or cheese for extra flavor." },
+  chapathi: { title: "Chapathi", ingredients: ["1 cup wheat flour","Water","Salt"], steps:["Mix flour with water and salt","Knead dough","Roll and cook on pan"], description: "Soft Indian flatbread.\nHealthy and versatile.\nPairs well with curries or vegetables." },
+  pongal: { title: "Pongal", ingredients: ["Rice","Moong dal","Ghee","Black pepper","Ginger"], steps:["Cook rice and dal","Add spices and ghee","Serve hot"], description: "Comforting South Indian dish.\nWarm, hearty, and flavorful.\nPerfect for breakfast or brunch." },
+  sandwich:{title: "Sandwich", ingredients: ["bread","fryed egg","vegetables"], steps:["take bread","put egg in it","put veggies in it"], description: "Good for health.\nStomach full, good for morning breakfast.\nVery tasty." },
+  pasta: { title: "Pasta", ingredients: ["200g pasta","Tomato sauce","Olive oil","Cheese"], steps:["Boil pasta","Prepare sauce","Mix and serve"], description: "Classic Italian pasta.\nCheesy and saucy goodness.\nQuick and delicious lunch option." },
+  friedrice: { title: "Fried Rice", ingredients: ["2 cups rice","Mixed veggies","Soy sauce","Eggs"], steps:["Cook rice","Stir-fry veggies and eggs","Mix with rice & soy sauce"], description: "Savory fried rice.\nColorful and flavorful.\nA complete one-dish meal." },
+  salad: { title: "Salad", ingredients: ["Lettuce","Tomato","Cucumber","Dressing"], steps:["Chop veggies","Add dressing","Toss and serve"], description: "Fresh and healthy salad.\nCrunchy and light.\nPerfect for a refreshing lunch." },
+  biryani: { title: "Biryani", ingredients: ["Rice","Meat/Vegetables","Spices","Yogurt"], steps:["Cook rice and meat/veg with spices","Layer and cook","Serve hot"], description: "Fragrant and spicy biryani.\nRich flavors in every bite.\nA feast for lunch or dinner." },
+  meals: { title: "Meals", ingredients: ["Rice","Dal","Curry","Vegetables"], steps:["Cook rice","Prepare dal and curry","Serve with vegetables"], description: "Balanced traditional meal.\nNutritious and fulfilling.\nComfort food for everyone." },
+  pizza: { title: "Pizza", ingredients: ["Pizza base","Tomato sauce","Cheese","Toppings"], steps:["Spread sauce on base","Add toppings","Bake for 15 mins"], description: "Cheesy homemade pizza.\nTopped with fresh ingredients.\nPerfect dinner indulgence." },
+  curry: { title: "Curry", ingredients: ["Onion","Tomato","Spices","Vegetables/Chicken"], steps:["Fry onion & tomato","Add spices","Cook with veggies/meat"], description: "Rich and flavorful curry.\nSpices blend perfectly.\nEnjoy with rice or bread." },
+  noodles: { title: "Noodles", ingredients: ["Noodles","Veggies","Soy sauce","Oil"], steps:["Boil noodles","Stir fry veggies","Mix with noodles & sauce"], description: "Quick and tasty noodles.\nSavory and light.\nIdeal for a casual dinner." },
+  soup: { title: "Soup", ingredients: ["Vegetables","Water","Salt","Spices"], steps:["Boil vegetables in water","Add spices","Serve hot"], description: "Warm comforting soup.\nHealthy and light.\nGreat for chilly evenings." },
+  grilledchicken: { title: "Grilled Chicken", ingredients: ["Chicken","Spices","Oil"], steps:["Marinate chicken","Grill on pan","Serve hot"], description: "Juicy grilled chicken.\nPerfectly spiced.\nIdeal for protein-packed dinner." },
+  steak: { title: "Steak", ingredients: ["Beef","Salt","Pepper","Butter"], steps:["Season steak","Sear on pan","Serve with sauce"], description: "Tender and juicy steak.\nFull of flavor.\nPerfect hearty dinner." },
+  samosa: { title: "Samosa", ingredients: ["Potatoes","Spices","Flour","Oil"], steps:["Prepare potato filling","Fill dough","Deep fry till golden"], description: "Crispy golden samosas.\nSavory and spicy.\nGreat for tea time snack." },
+  burger: { title: "Burger", ingredients: ["Buns","Patty","Lettuce","Cheese","Sauce"], steps:["Grill patty","Assemble burger","Serve with fries"], description: "Classic juicy burger.\nLayers of flavor.\nPerfect for quick snacks." },
+  fries: { title: "Fries", ingredients: ["Potatoes","Salt","Oil"], steps:["Cut potatoes","Deep fry","Add salt & serve"], description: "Crispy golden fries.\nSalty and delicious.\nPerfect snack anytime." },
+  pakora: { title: "Pakora", ingredients: ["Gram flour","Vegetables","Spices","Oil"], steps:["Mix flour and veggies","Add spices","Deep fry till golden"], description: "Hot and crispy pakoras.\nSpicy and flavorful.\nPerfect for rainy days." },
+  springroll: { title: "Spring Roll", ingredients: ["Wrapper","Vegetables","Sauce","Oil"], steps:["Prepare filling","Wrap veggies","Deep fry or bake"], description: "Crispy spring rolls.\nFresh veggies inside.\nGreat appetizer or snack." },
+  sandwichSnack: { title: "Veg Sandwich", ingredients: ["Bread","Veggies","Cheese","Sauce"], steps:["Assemble sandwich","Grill if needed","Serve"], description: "Quick veggie sandwich.\nFresh and healthy.\nPerfect snack for any time." },
+  cornpakora: { title: "Corn Pakora", ingredients: ["Corn","Gram flour","Spices","Oil"], steps:["Mix corn with gram flour and spices","Deep fry till golden","Serve hot"], description: "Crispy corn pakoras.\nSweet and spicy.\nGreat for evening snacks." },
+cheeseballs: { title: "Cheese Balls", ingredients: ["Cheese","Bread crumbs","Spices","Oil"], steps:["Shape cheese mixture into balls","Coat with breadcrumbs","Deep fry and serve"], description: "Golden cheese balls.\nCheesy and crispy.\nPerfect snack for kids and adults." },
+cheesesticks: { title: "Cheese Sticks", ingredients: ["Cheese","Flour","Eggs","Breadcrumbs","Oil"], steps:["Coat cheese sticks with flour and breadcrumbs","Deep fry until golden","Serve with sauce"], description: "Crispy cheese sticks.\nCheesy inside.\nIdeal for tea time." },
+chillipaneer: { title: "Chilli Paneer", ingredients: ["Paneer","Bell Peppers","Onions","Soy Sauce","Spices"], steps:["Fry paneer cubes","Sauté veggies with sauce","Mix together and serve"], description: "Spicy and tangy chilli paneer.\nCrispy and flavorful.\nA popular Indo-Chinese snack." },
+nachos: { title: "Nachos", ingredients: ["Tortilla Chips","Cheese","Jalapenos","Salsa"], steps:["Arrange chips on plate","Top with cheese and jalapenos","Bake until cheese melts"], description: "Crunchy nachos.\nCheesy and spicy.\nPerfect party snack." },
+chickenwings: { title: "Chicken Wings", ingredients: ["Chicken","Spices","Sauce","Oil"], steps:["Marinate chicken wings","Bake or fry until cooked","Coat with sauce and serve"], description: "Juicy chicken wings.\nSpicy and savory.\nPerfect for game nights." },
+mozzarellaballs: { title: "Mozzarella Balls", ingredients: ["Mozzarella","Flour","Eggs","Breadcrumbs","Oil"], steps:["Shape cheese into balls","Coat with breadcrumbs","Deep fry till golden"], description: "Crispy mozzarella balls.\nCheesy and soft inside.\nGreat snack for cheese lovers." },
+vegcutlets: { title: "Veg Cutlets", ingredients: ["Mixed Vegetables","Potatoes","Spices","Breadcrumbs","Oil"], steps:["Mash vegetables and potatoes","Shape into cutlets","Shallow fry and serve"], description: "Crispy veg cutlets.\nSpicy and tasty.\nPerfect for evening snacks." },
+potatopoppers: { title: "Potato Poppers", ingredients: ["Potatoes","Cheese","Breadcrumbs","Spices","Oil"], steps:["Prepare potato mixture","Shape into balls","Deep fry and serve"], description: "Golden potato poppers.\nCheesy and crispy.\nIdeal for parties." },
+onionrings: { title: "Onion Rings", ingredients: ["Onions","Flour","Eggs","Breadcrumbs","Oil"], steps:["Slice onions into rings","Coat with batter","Deep fry until golden"], description: "Crispy onion rings.\nSalty and tasty.\nPerfect snack anytime." },
+garlicbread: { title: "Garlic Bread", ingredients: ["Bread","Butter","Garlic","Parsley"], steps:["Spread garlic butter on bread","Bake until golden","Serve hot"], description: "Buttery garlic bread.\nCrunchy and flavorful.\nGreat starter or snack." },
+miniquiches: { title: "Mini Quiches", ingredients: ["Eggs","Cream","Vegetables","Cheese","Pastry Shells"], steps:["Prepare filling with eggs and veggies","Fill pastry shells","Bake until set"], description: "Savory mini quiches.\nSoft and cheesy.\nPerfect finger food for parties." },
+
+  cake: { title: "Cake", ingredients: ["Flour","Eggs","Sugar","Butter","Baking powder"], steps:["Mix ingredients","Bake at 180°C","Decorate & serve"], description: "Soft and fluffy cake.\nSweet and delightful.\nPerfect for celebrations." },
+  cupcake: { title: "Cupcake", ingredients: ["Flour","Sugar","Eggs","Butter","Flavoring"], steps:["Mix ingredients","Bake in small cups","Decorate"], description: "Small sweet cupcakes.\nPerfect bite-sized treats.\nGreat for parties." },
+  icecream: { title: "Ice Cream", ingredients: ["Milk","Sugar","Cream","Flavor"], steps:["Mix ingredients","Freeze","Serve chilled"], description: "Creamy ice cream.\nCool and sweet.\nA perfect dessert for everyone." },
+  pudding: { title: "Pudding", ingredients: ["Milk","Sugar","Cornflour","Flavor"], steps:["Mix ingredients","Cook until thick","Cool and serve"], description: "Smooth and creamy pudding.\nSweet and comforting.\nEnjoy as a dessert after meals." },
+  brownie: { title: "Brownie", ingredients: ["Chocolate","Butter","Flour","Sugar","Eggs"], steps:["Melt chocolate","Mix ingredients","Bake till set"], description: "Rich chocolate brownie.\nFudgy and soft.\nPerfect treat for chocolate lovers." },
+  gulabjamun: { title: "Gulab Jamun", ingredients: ["Khoya","Sugar","Flour","Cardamom"], steps:["Prepare dough","Shape and fry","Soak in sugar syrup"], description: "Soft and sweet gulab jamun.\nClassic Indian dessert.\nBest served warm." },
+  pancakes: { title: "Pancakes", ingredients: ["1 cup flour","2 eggs","1 cup milk","Sugar","Butter"], steps:["Mix all ingredients","Cook on pan","Serve hot with syrup"], description: "Fluffy pancakes that melt in your mouth.\nPerfect for a sweet morning.\nPair with maple syrup and fruits." },
+  omelette: { title: "Omelette", ingredients: ["2 eggs","Salt","Pepper","Oil"], steps:["Beat eggs","Pour into pan","Cook and fold"], description: "A classic breakfast staple.\nProtein-rich and satisfying.\nAdd veggies or cheese for extra flavor." },
+  chapathi: { title: "Chapathi", ingredients: ["1 cup wheat flour","Water","Salt"], steps:["Mix flour with water and salt","Knead dough","Roll and cook on pan"], description: "Soft Indian flatbread.\nHealthy and versatile.\nPairs well with curries or vegetables." },
+  pongal: { title: "Pongal", ingredients: ["Rice","Moong dal","Ghee","Black pepper","Ginger"], steps:["Cook rice and dal","Add spices and ghee","Serve hot"], description: "Comforting South Indian dish.\nWarm, hearty, and flavorful.\nPerfect for breakfast or brunch." },
+  sandwich:{title: "Sandwich", ingredients: ["bread","fryed egg","vegetables"], steps:["take bread","put egg in it","put veggies in it"], description: "Good for health.\nStomach full, good for morning breakfast.\nVery tasty." },
+  pasta: { title: "Pasta", ingredients: ["200g pasta","Tomato sauce","Olive oil","Cheese"], steps:["Boil pasta","Prepare sauce","Mix and serve"], description: "Classic Italian pasta.\nCheesy and saucy goodness.\nQuick and delicious lunch option." },
+  friedrice: { title: "Fried Rice", ingredients: ["2 cups rice","Mixed veggies","Soy sauce","Eggs"], steps:["Cook rice","Stir-fry veggies and eggs","Mix with rice & soy sauce"], description: "Savory fried rice.\nColorful and flavorful.\nA complete one-dish meal." },
+  salad: { title: "Salad", ingredients: ["Lettuce","Tomato","Cucumber","Dressing"], steps:["Chop veggies","Add dressing","Toss and serve"], description: "Fresh and healthy salad.\nCrunchy and light.\nPerfect for a refreshing lunch." },
+  biryani: { title: "Biryani", ingredients: ["Rice","Meat/Vegetables","Spices","Yogurt"], steps:["Cook rice and meat/veg with spices","Layer and cook","Serve hot"], description: "Fragrant and spicy biryani.\nRich flavors in every bite.\nA feast for lunch or dinner." },
+  meals: { title: "Meals", ingredients: ["Rice","Dal","Curry","Vegetables"], steps:["Cook rice","Prepare dal and curry","Serve with vegetables"], description: "Balanced traditional meal.\nNutritious and fulfilling.\nComfort food for everyone." },
+  pizza: { title: "Pizza", ingredients: ["Pizza base","Tomato sauce","Cheese","Toppings"], steps:["Spread sauce on base","Add toppings","Bake for 15 mins"], description: "Cheesy homemade pizza.\nTopped with fresh ingredients.\nPerfect dinner indulgence." },
+  curry: { title: "Curry", ingredients: ["Onion","Tomato","Spices","Vegetables/Chicken"], steps:["Fry onion & tomato","Add spices","Cook with veggies/meat"], description: "Rich and flavorful curry.\nSpices blend perfectly.\nEnjoy with rice or bread." },
+  noodles: { title: "Noodles", ingredients: ["Noodles","Veggies","Soy sauce","Oil"], steps:["Boil noodles","Stir fry veggies","Mix with noodles & sauce"], description: "Quick and tasty noodles.\nSavory and light.\nIdeal for a casual dinner." },
+ 
+  soup: { title: "Soup", ingredients: ["Vegetables","Water","Salt","Spices"], steps:["Boil vegetables in water","Add spices","Serve hot"], description: "Warm comforting soup.\nHealthy and light.\nGreat for chilly evenings." },
+  grilledchicken: { title: "Grilled Chicken", ingredients: ["Chicken","Spices","Oil"], steps:["Marinate chicken","Grill on pan","Serve hot"], description: "Juicy grilled chicken.\nPerfectly spiced.\nIdeal for protein-packed dinner." },
+  steak: { title: "Steak", ingredients: ["Beef","Salt","Pepper","Butter"], steps:["Season steak","Sear on pan","Serve with sauce"], description: "Tender and juicy steak.\nFull of flavor.\nPerfect hearty dinner." },
+  chickenparmesan: { title: "Chicken Parmesan", ingredients: ["Chicken","Breadcrumbs","Cheese","Tomato Sauce","Spices"], steps:["Coat chicken with breadcrumbs","Fry until golden","Bake with cheese and sauce"], description: "Crispy chicken topped with cheese and sauce.\nSavory and cheesy.\nA favorite dinner choice." },
+spaghettibolognese: { title: "Spaghetti Bolognese", ingredients: ["Spaghetti","Ground Beef","Tomato Sauce","Onion","Garlic","Spices"], steps:["Cook spaghetti","Prepare meat sauce","Mix and serve"], description: "Classic Italian spaghetti.\nRich and hearty.\nPerfect for family dinners." },
+fajitas: { title: "Fajitas", ingredients: ["Chicken/Beef","Bell Peppers","Onions","Tortilla","Spices"], steps:["Cook meat with spices","Sauté veggies","Serve with tortillas"], description: "Flavorful meat and veggies in tortillas.\nSpicy and savory.\nA fun interactive dinner." },
+tacobowl: { title: "Taco Bowl", ingredients: ["Rice/Quinoa","Chicken/Beef","Beans","Lettuce","Salsa"], steps:["Cook base grain","Prepare protein","Assemble with toppings"], description: "Deconstructed taco in a bowl.\nHealthy and filling.\nPerfect for quick dinners." },
+grilledsalmon: { title: "Grilled Salmon", ingredients: ["Salmon","Lemon","Spices","Olive Oil"], steps:["Season salmon","Grill until cooked","Serve with lemon"], description: "Tender grilled salmon.\nLight and healthy.\nPerfect for a gourmet dinner." },
+chickenalfredo: { title: "Chicken Alfredo", ingredients: ["Pasta","Chicken","Cream","Parmesan","Butter","Garlic"], steps:["Cook pasta","Prepare creamy sauce","Add chicken and serve"], description: "Creamy pasta with chicken.\nRich and indulgent.\nA comforting dinner dish." },
+beefstirfry: { title: "Beef Stir Fry", ingredients: ["Beef","Veggies","Soy Sauce","Garlic","Oil"], steps:["Slice beef thin","Stir-fry beef and veggies","Add sauce and serve"], description: "Quick beef stir-fry.\nSavory and delicious.\nPerfect weeknight dinner." },
+chickenparatha: { title: "Chicken Paratha", ingredients: ["Paratha Dough","Chicken","Spices","Oil"], steps:["Cook spiced chicken","Stuff into paratha","Cook on pan and serve"], description: "Spiced chicken stuffed paratha.\nTasty and filling.\nA popular Indian dinner choice." },
+paneertikka: { title: "Paneer Tikka Masala", ingredients: ["Paneer","Yogurt","Spices","Tomato Sauce","Cream"], steps:["Marinate paneer","Cook in sauce","Serve hot"], description: "Soft paneer in rich masala.\nSpicy and creamy.\nPerfect for vegetarian dinners." },
+vegmanchurian: { title: "Veg Manchurian", ingredients: ["Vegetables","Flour","Soy Sauce","Spices","Oil"], steps:["Prepare veg balls","Fry until golden","Cook in sauce and serve"], description: "Crispy veg balls in tangy sauce.\nSpicy and savory.\nPopular Indo-Chinese dinner." },
+fishcurry: { title: "Fish Curry", ingredients: ["Fish","Spices","Coconut Milk","Onions","Tomatoes"], steps:["Prepare curry base","Cook fish in sauce","Serve hot"], description: "Flavorsome fish curry.\nRich and spicy.\nPerfect with rice for dinner." },
+chickenfajita: { title: "Chicken Fajita", ingredients: ["Chicken","Bell Peppers","Onions","Tortilla","Spices"], steps:["Cook chicken with spices","Sauté veggies","Serve with tortillas"], description: "Juicy chicken with sautéed veggies.\nSpicy and savory.\nA fun dinner favorite." },
+
+  samosa: { title: "Samosa", ingredients: ["Potatoes","Spices","Flour","Oil"], steps:["Prepare potato filling","Fill dough","Deep fry till golden"], description: "Crispy golden samosas.\nSavory and spicy.\nGreat for tea time snack." },
+  burger: { title: "Burger", ingredients: ["Buns","Patty","Lettuce","Cheese","Sauce"], steps:["Grill patty","Assemble burger","Serve with fries"], description: "Classic juicy burger.\nLayers of flavor.\nPerfect for quick snacks." },
+  fries: { title: "Fries", ingredients: ["Potatoes","Salt","Oil"], steps:["Cut potatoes","Deep fry","Add salt & serve"], description: "Crispy golden fries.\nSalty and delicious.\nPerfect snack anytime." },
+  pakora: { title: "Pakora", ingredients: ["Gram flour","Vegetables","Spices","Oil"], steps:["Mix flour and veggies","Add spices","Deep fry till golden"], description: "Hot and crispy pakoras.\nSpicy and flavorful.\nPerfect for rainy days." },
+  springroll: { title: "Spring Roll", ingredients: ["Wrapper","Vegetables","Sauce","Oil"], steps:["Prepare filling","Wrap veggies","Deep fry or bake"], description: "Crispy spring rolls.\nFresh veggies inside.\nGreat appetizer or snack." },
+  sandwichSnack: { title: "Veg Sandwich", ingredients: ["Bread","Veggies","Cheese","Sauce"], steps:["Assemble sandwich","Grill if needed","Serve"], description: "Quick veggie sandwich.\nFresh and healthy.\nPerfect snack for any time." },
+  cake: { title: "Cake", ingredients: ["Flour","Eggs","Sugar","Butter","Baking powder"], steps:["Mix ingredients","Bake at 180°C","Decorate & serve"], description: "Soft and fluffy cake.\nSweet and delightful.\nPerfect for celebrations." },
+  cupcake: { title: "Cupcake", ingredients: ["Flour","Sugar","Eggs","Butter","Flavoring"], steps:["Mix ingredients","Bake in small cups","Decorate"], description: "Small sweet cupcakes.\nPerfect bite-sized treats.\nGreat for parties." },
+  icecream: { title: "Ice Cream", ingredients: ["Milk","Sugar","Cream","Flavor"], steps:["Mix ingredients","Freeze","Serve chilled"], description: "Creamy ice cream.\nCool and sweet.\nA perfect dessert for everyone." },
+  pudding: { title: "Pudding", ingredients: ["Milk","Sugar","Cornflour","Flavor"], steps:["Mix ingredients","Cook until thick","Cool and serve"], description: "Smooth and creamy pudding.\nSweet and comforting.\nEnjoy as a dessert after meals." },
+  brownie: { title: "Brownie", ingredients: ["Chocolate","Butter","Flour","Sugar","Eggs"], steps:["Melt chocolate","Mix ingredients","Bake till set"], description: "Rich chocolate brownie.\nFudgy and soft.\nPerfect treat for chocolate lovers." },
+  gulabjamun: { title: "Gulab Jamun", ingredients: ["Khoya","Sugar","Flour","Cardamom"], steps:["Prepare dough","Shape and fry","Soak in sugar syrup"], description: "Soft and sweet gulab jamun.\nClassic Indian dessert.\nBest served warm." },
+rasgulla: { title: "Rasgulla", ingredients: ["Chenna (cottage cheese)","Sugar","Water","Cardamom"], steps:["Prepare chenna balls","Boil in sugar syrup","Cool and serve"], description: "Spongy white rasgulla.\nSweet and juicy.\nA popular Bengali dessert." },
+jalebi: { title: "Jalebi", ingredients: ["Flour","Yogurt","Sugar","Saffron","Oil"], steps:["Prepare batter","Pipe into hot oil","Soak in sugar syrup"], description: "Crispy jalebi.\nSweet and syrupy.\nLoved at festivals and celebrations." },
+kheer: { title: "Kheer", ingredients: ["Rice","Milk","Sugar","Cardamom","Nuts"], steps:["Cook rice in milk","Add sugar and cardamom","Garnish with nuts"], description: "Creamy rice kheer.\nTraditional Indian dessert.\nBest served chilled or warm." },
+laddu: { title: "Laddu", ingredients: ["Gram flour","Sugar","Ghee","Cardamom"], steps:["Roast flour in ghee","Mix with sugar","Shape into balls"], description: "Sweet and soft laddus.\nMade with ghee and gram flour.\nPerfect festive treat." },
+barfi: { title: "Barfi", ingredients: ["Milk solids","Sugar","Ghee","Nuts"], steps:["Cook milk solids with sugar","Spread on tray","Cut into squares"], description: "Rich and sweet barfi.\nSoft and fudgy.\nComes in many flavors." },
+applepie: { title: "Apple Pie", ingredients: ["Apples","Flour","Butter","Sugar","Cinnamon"], steps:["Prepare crust","Fill with apple mixture","Bake until golden"], description: "Classic apple pie.\nSweet apple filling with crispy crust.\nPerfect with ice cream." },
+cheesecake: { title: "Cheesecake", ingredients: ["Cream cheese","Sugar","Eggs","Crust"], steps:["Prepare crust","Mix cream cheese filling","Bake and chill"], description: "Smooth cheesecake.\nCreamy and rich.\nA crowd favorite dessert." },
+donut: { title: "Donut", ingredients: ["Flour","Sugar","Yeast","Milk","Butter"], steps:["Prepare dough","Fry until golden","Glaze or add toppings"], description: "Soft and fluffy donuts.\nSweet and tasty.\nEnjoy with tea or coffee." },
+mousse: { title: "Chocolate Mousse", ingredients: ["Chocolate","Cream","Sugar","Eggs"], steps:["Melt chocolate","Fold with whipped cream","Chill before serving"], description: "Light chocolate mousse.\nAiry and creamy.\nPerfect for chocolate lovers." },
+halwa: { title: "Carrot Halwa", ingredients: ["Carrots","Milk","Sugar","Ghee","Nuts"], steps:["Grate carrots","Cook with milk and sugar","Add ghee and nuts"], description: "Traditional carrot halwa.\nSweet and rich.\nBest served warm with nuts." },
+
+  /* NEW BREAKFAST RECIPES - paste included here in same format */
+  idli: {
+    title: "Idli",
+    ingredients: ["2 cups idli rice","1 cup urad dal","Salt","Water"],
+    steps: ["Soak rice and urad dal separately overnight","Grind both to a smooth batter with water","Mix, add salt and ferment overnight","Pour batter into idli moulds and steam for 10-12 minutes"],
+    description: "Soft and fluffy South Indian steamed cakes.\nLight, healthy, and best served with coconut chutney and sambar."
+  },
+  dosa: {
+    title: "Dosa",
+    ingredients: ["2 cups dosa rice","1 cup urad dal","Salt","Oil"],
+    steps: ["Soak rice and urad dal for 4-6 hours","Grind to a smooth batter and ferment 6-8 hours","Heat pan and spread a ladle of batter thinly","Drizzle oil and cook till crisp on both sides if desired"],
+    description: "Crispy golden dosa.\nA South Indian favorite.\nDelicious with chutney and sambar."
+  },
+  poha: {
+    title: "Poha",
+    ingredients: ["2 cups flattened rice (poha)","1 onion","1 green chili","Curry leaves","Peanuts","Salt","Oil","Turmeric","Lemon (optional)"],
+    steps: ["Rinse poha in water and drain","Heat oil, fry peanuts and set aside","Sauté onion, chili and curry leaves with turmeric","Add poha, salt and mix gently","Cook for 2-3 minutes and finish with lemon juice"],
+    description: "Light and fluffy poha.\nPopular Indian breakfast.\nQuick, tasty, and filling."
+  },
+  upma: {
+    title: "Upma",
+    ingredients: ["1 cup rava/semolina","1 onion","1 green chili","Curry leaves","Mustard seeds","Salt","Water","Oil/Ghee"],
+    steps: ["Roast rava lightly and keep aside","Temper mustard seeds, curry leaves and onion in oil","Add water, bring to boil and add salt","Slowly add roasted rava and stir till thick and cooked"],
+    description: "Classic South Indian upma.\nWarm, soft, and comforting.\nPerfect with coconut chutney or pickle."
+  },
+  paratha: {
+    title: "Paratha",
+    ingredients: ["2 cups wheat flour","Salt","Water","Boiled potato (for aloo paratha)","Spices (cumin, garam masala)","Ghee/Oil"],
+    steps: ["Prepare soft dough with flour, salt and water","Mash spiced boiled potato for stuffing","Roll a small circle, add stuffing, fold and roll again","Cook on hot tawa with ghee until golden brown both sides"],
+    description: "Stuffed Indian parathas.\nCrispy outside, soft inside.\nGreat with yogurt and pickle."
+  },
+  "bread-toast": {
+    title: "Bread Toast",
+    ingredients: ["4 bread slices","Butter or margarine","Jam or egg (optional)"],
+    steps: ["Heat pan or toaster","Toast bread slices till golden","Spread butter or jam, or add a fried egg on top","Serve immediately"],
+    description: "Simple and quick toast.\nCan be sweet with jam or savory with egg.\nPerfect on busy mornings."
+  },
+  smoothie: {
+    title: "Fruit Smoothie",
+    ingredients: ["1 banana","1 cup milk or plant milk","½ cup yogurt","1-2 tsp honey","Handful of berries or other fruit"],
+    steps: ["Combine all ingredients in a blender","Blend until smooth and creamy","Pour into a glass and serve chilled"],
+    description: "Refreshing fruit smoothie.\nPacked with vitamins and energy.\nA quick healthy breakfast drink."
+  },
+  cereal: {
+    title: "Cereal & Milk",
+    ingredients: ["1 cup cereal flakes","1 cup cold milk","Fresh fruit slices (optional)"],
+    steps: ["Pour cereal into a bowl","Add milk and top with fruits if desired","Serve immediately to keep cereal crunchy"],
+    description: "Simple cereal breakfast.\nQuick, crunchy, and energizing.\nPerfect for busy mornings."
+  },
+  oats: {
+    title: "Oats Porridge",
+    ingredients: ["1 cup rolled oats","2 cups water or milk","Sugar or honey to taste","Fruit or nuts for topping (optional)"],
+    steps: ["Bring milk or water to a boil","Add oats and simmer for 3-5 minutes until thick","Sweeten and top with fruits or nuts","Serve warm"],
+    description: "Healthy oats porridge.\nWarm and filling.\nA nutritious start to the day."
+  },
+  uttapam: {
+    title: "Uttapam",
+    ingredients: ["2 cups dosa batter","1 small onion (chopped)","1 tomato (chopped)","1 green chili (chopped)","Oil"],
+    steps: ["Heat tawa and pour a ladle of thick batter","Sprinkle chopped veggies on top and press lightly","Drizzle a little oil and cook until golden","Flip and cook other side briefly and serve with chutney"],
+    description: "Soft uttapam topped with veggies.\nTasty and colorful.\nServed with coconut chutney or sambar."
+  },
+  vada: {
+    title: "Medu Vada",
+    ingredients: ["1 cup urad dal (soaked)","1 small onion (chopped)","Green chili (chopped)","Curry leaves (chopped)","Salt","Oil for frying"],
+    steps: ["Grind soaked urad dal to smooth batter with little water","Mix in onion, chili, curry leaves and salt","Shape into doughnut rings and deep fry until golden brown","Drain on paper towel and serve with chutney and sambar"],
+    description: "Crispy South Indian vadas.\nGolden outside, soft inside.\nBest with coconut chutney and sambar."
+  },
+  tea: {
+    title: "Masala Chai",
+    ingredients: ["1 cup water","1 cup milk","1-2 tsp tea leaves","Sugar to taste","Spices: ginger, cardamom, cloves (crushed)"],
+    steps: ["Boil water with crushed spices for 2-3 minutes","Add tea leaves and simmer","Pour milk and sugar, boil for 1-2 minutes","Strain into cups and serve hot"],
+    description: "Strong Indian masala chai.\nFragrant and energizing.\nA breakfast essential for many."
+  },
+  coffee: {
+    title: "Filter Coffee",
+    ingredients: ["2 tbsp filter coffee powder","1 cup water","1 cup milk","Sugar to taste"],
+    steps: ["Prepare coffee decoction using a filter","Boil and froth milk","Mix desired amount of decoction with milk and sugar","Serve hot and frothy"],
+    description: "South Indian filter coffee.\nRich aroma and strong taste.\nPerfect way to kickstart the day."
+  },
+  
+chickencurry: { title: "Chicken Curry", ingredients: ["500g chicken","Onion","Tomato","Spices","Oil"], steps:["Fry onions until golden","Add spices and tomatoes","Add chicken and cook until done","Serve hot with rice or roti"], description: "A flavorful Indian chicken curry.\nSpicy and aromatic.\nPerfect for a hearty lunch." },
+paneerbuttermasala: { title: "Paneer Butter Masala", ingredients: ["200g paneer","Butter","Tomato puree","Cream","Spices"], steps:["Fry paneer cubes lightly","Prepare creamy tomato sauce","Add paneer to sauce","Serve hot with naan or roti"], description: "Rich and creamy paneer curry.\nMildly spiced and delicious.\nPerfect for a vegetarian lunch." },
+daltadka: { title: "Dal Tadka", ingredients: ["1 cup lentils","Onion","Tomato","Garlic","Spices","Oil"], steps:["Cook lentils until soft","Prepare tadka with spices and garlic","Mix tadka with cooked lentils","Serve with rice or roti"], description: "Protein-rich lentil dish.\nLightly spiced and comforting.\nIdeal for a traditional Indian lunch." },
+jeerarice: { title: "Jeera Rice", ingredients: ["1 cup basmati rice","Cumin seeds","Ghee or Oil","Salt"], steps:["Wash and cook rice","Heat ghee/oil and fry cumin seeds","Mix cumin with cooked rice","Serve with curry or dal"], description: "Fragrant cumin-flavored rice.\nSimple and aromatic.\nGreat as a side dish for lunch." },
+vegbiryani: { title: "Veg Biryani", ingredients: ["Basmati rice","Mixed vegetables","Yogurt","Spices","Ghee"], steps:["Cook rice and vegetables separately","Layer rice and veggies with spices","Cook on low heat","Serve hot with raita"], description: "Flavorful mixed vegetable biryani.\nSpicy and aromatic.\nPerfect for a fulfilling vegetarian lunch." },
+chickenbiryani: { title: "Chicken Biryani", ingredients: ["Basmati rice","Chicken","Yogurt","Spices","Ghee"], steps:["Marinate chicken with spices","Cook rice partially","Layer chicken and rice","Cook on low heat","Serve hot with raita"], description: "Rich and spicy chicken biryani.\nFull of flavor.\nA hearty lunch option for meat lovers." },
+mutterpaneer: { title: "Mutter Paneer", ingredients: ["Paneer","Green peas","Tomato","Onion","Spices","Oil"], steps:["Fry paneer cubes lightly","Prepare onion-tomato gravy with spices","Add peas and paneer","Cook until done","Serve hot with rice or roti"], description: "Creamy paneer with green peas.\nMildly spiced and delicious.\nGreat for a vegetarian lunch." },
+rajma: { title: "Rajma", ingredients: ["Kidney beans","Onion","Tomato","Spices","Oil"], steps:["Soak and cook kidney beans","Prepare onion-tomato gravy with spices","Mix beans with gravy","Simmer and serve with rice"], description: "Classic North Indian kidney bean curry.\nRich and comforting.\nPerfect with steamed rice for lunch." },
+chole: { title: "Chole", ingredients: ["Chickpeas","Onion","Tomato","Spices","Oil"], steps:["Soak and cook chickpeas","Prepare onion-tomato gravy","Add chickpeas to gravy and simmer","Serve hot with rice or bhature"], description: "Spicy and tangy chickpea curry.\nFull of flavor.\nIdeal for a hearty vegetarian lunch." },
+fishcurry: { title: "Fish Curry", ingredients: ["Fish","Onion","Tomato","Spices","Oil","Coconut milk"], steps:["Fry onions and tomatoes with spices","Add fish pieces","Pour coconut milk and simmer","Serve hot with rice"], description: "Flavorful fish curry.\nRich and spicy.\nPerfect for a seafood lunch." },
+eggcurry: { title: "Egg Curry", ingredients: ["Boiled eggs","Onion","Tomato","Spices","Oil"], steps:["Prepare onion-tomato gravy with spices","Add boiled eggs to gravy","Simmer for few minutes","Serve hot with rice or roti"], description: "Spicy and rich egg curry.\nSimple yet delicious.\nGreat for a protein-packed lunch." },
+aloogobi: { title: "Aloo Gobi", ingredients: ["Potatoes","Cauliflower","Onion","Tomato","Spices","Oil"], steps:["Fry onions and tomatoes with spices","Add potatoes and cauliflower","Cook until tender","Serve hot with roti"], description: "Classic potato and cauliflower curry.\nMildly spiced and comforting.\nPerfect for a vegetarian lunch." },
+mixveg: { title: "Mix Veg", ingredients: ["Mixed vegetables","Onion","Tomato","Spices","Oil"], steps:["Fry onions and tomatoes with spices","Add mixed vegetables","Cook until tender","Serve hot with rice or roti"], description: "Healthy mixed vegetable curry.\nNutritious and colorful.\nIdeal for a balanced lunch." },
+naan: { title: "Naan", ingredients: ["Flour","Yeast","Yogurt","Salt","Oil"], steps:["Prepare dough with ingredients","Let it rise","Roll and cook on tawa or oven","Serve hot with curry"], description: "Soft and fluffy Indian flatbread.\nPerfect to accompany any curry or dal." },
+roti: { title: "Roti", ingredients: ["Wheat flour","Water","Salt"], steps:["Knead flour with water and salt","Roll into discs","Cook on tawa","Serve hot with curry or vegetables"], description: "Simple and healthy Indian flatbread.\nStaple for any Indian lunch." },
+chickenfry: { title: "Chicken Fry", ingredients: ["Chicken pieces","Spices","Oil"], steps:["Marinate chicken with spices","Deep fry or pan fry until cooked","Serve hot"], description: "Crispy and flavorful fried chicken.\nPerfect for a tasty lunch or snack." },
+vegcutlet: { title: "Veg Cutlet", ingredients: ["Mixed vegetables","Bread crumbs","Spices","Oil"], steps:["Mash vegetables and mix with spices","Shape into cutlets","Shallow fry until golden","Serve hot with chutney"], description: "Crispy and delicious vegetable cutlets.\nPerfect snack or light lunch." },
+pastalunch: { title: "Pasta", ingredients: ["200g pasta","Tomato sauce","Olive oil","Cheese"], steps:["Boil pasta","Prepare sauce","Mix and serve"], description: "Classic Italian pasta.\nCheesy and saucy goodness.\nQuick and delicious lunch option." }
+
+
+};
+
+// ------------------- PAGE LOGIC -------------------
+window.addEventListener("DOMContentLoaded", () => {
+  const recipeId = localStorage.getItem("selectedRecipe");
+  const recipeNameEl = document.getElementById("recipe-name");
+  const ingredientsEl = document.getElementById("ingredients");
+  const stepsEl = document.getElementById("steps");
+  const favoriteBtn = document.getElementById("favorite-btn");
+  const descriptionEl = document.getElementById("description");
+
+  if (recipeId && recipes[recipeId]) {
+    // Display recipe data
+    recipeNameEl.textContent = recipes[recipeId].title;
+    ingredientsEl.innerHTML = recipes[recipeId].ingredients.map(i => `<li>${i}</li>`).join("");
+    stepsEl.innerHTML = recipes[recipeId].steps.map(s => `<li>${s}</li>`).join("");
+    descriptionEl.innerHTML = recipes[recipeId].description.replace(/\n/g, "<br>");
+
+    // Handle favorite toggle
+    let favorites = JSON.parse(localStorage.getItem("favoriteRecipes") || "[]");
+    if (favorites.includes(recipeId)) {
+      favoriteBtn.classList.add("favorited");
+      favoriteBtn.textContent = "❤️";
+    } else {
+      favoriteBtn.classList.remove("favorited");
+      favoriteBtn.textContent = "🤍";
+    }
+
+    favoriteBtn.addEventListener("click", () => {
+      playClick(); // click sound
+      let favs = JSON.parse(localStorage.getItem("favoriteRecipes") || "[]");
+      if (favs.includes(recipeId)) {
+        favs = favs.filter(id => id !== recipeId);
+        favoriteBtn.classList.remove("favorited");
+        favoriteBtn.textContent = "🤍";
+      } else {
+        favs.push(recipeId);
+        favoriteBtn.classList.add("favorited");
+        favoriteBtn.textContent = "❤️";
+      }
+      localStorage.setItem("favoriteRecipes", JSON.stringify(favs));
+    });
+
+  } else {
+    recipeNameEl.textContent = "Recipe not found";
+    favoriteBtn.style.display = "none";
+    descriptionEl.textContent = "";
+  }
+});
+
+// Go back to home page
+function goHome() {
+  playClick();  // play click sound
+  window.location.href = "home.html";
+}
+
+// Used by game pages
+function openRecipe(recipeId) {
+  localStorage.setItem("selectedRecipe", recipeId);
+  window.location.href = "recipe.html";
+}
+
+</script>
+<script src="dark-mode.js"></script>
+
+<!-- jsPDF library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+
+<script>
+document.getElementById("download-pdf-btn").addEventListener("click", function () {
+    const recipeTitle = document.getElementById("recipe-name").innerText;
+    
+    // Gather ingredients, steps, and description
+    const ingredients = Array.from(document.querySelectorAll("#ingredients li")).map(li => "- " + li.innerText).join("\n");
+    const steps = Array.from(document.querySelectorAll("#steps li")).map((li, i) => (i+1) + ". " + li.innerText).join("\n");
+    const description = document.getElementById("description").innerText;
+
+    const recipeContent = "Ingredients:\n" + ingredients + "\n\nSteps:\n" + steps + "\n\nDescription:\n" + description;
+
+    // Create PDF
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    doc.setFontSize(18);
+    doc.text(recipeTitle, 10, 20);
+
+    doc.setFontSize(12);
+    const splitContent = doc.splitTextToSize(recipeContent, 180);
+    doc.text(splitContent, 10, 30);
+
+    // Save PDF
+    doc.save(`${recipeTitle}.pdf`);
+});
+
+    
+
+</script>
+
+
+</body>
+</html>

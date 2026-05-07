@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Random Recipe Game</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    text-align: center;
+    background: url('food2.avif') no-repeat center center fixed;
+    background-size: cover;
+    position: relative;
+    transition: color 0.3s;
+  }
+
+  body::after {
+    content: "";
+    position: fixed;
+    top:0; left:0;
+    width: 100%; height: 100%;
+    backdrop-filter: blur(6px);
+    background-color: rgba(255,255,255,0.2);
+    z-index: 0;
+    pointer-events: none;
+    transition: background-color 0.3s;
+  }
+
+  body > * { position: relative; z-index: 1; }
+
+  h1 {
+    margin-bottom: 30px;
+    color: #fff;
+    text-shadow: 2px 2px 5px rgba(0,0,0,0.6);
+  }
+
+  .game-selection {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 30px;
+    margin-bottom: 50px;
+  }
+
+  .game-card {
+    width: 250px;
+    height: 200px;
+    background: rgba(255,255,255,0.85);
+    border-radius: 15px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2em;
+    transition: transform 0.3s, box-shadow 0.3s, background 0.3s;
+  }
+
+  .game-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+  }
+
+  #flip-container, #spin-wheel, #pointer {
+    display: none;
+    margin-top: 20px;
+  }
+
+  #flip-container {
+    perspective: 1000px;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+
+  .flip-card {
+    width: 150px;
+    height: 100px;
+    background: #ffdd88;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1em;
+    cursor: pointer;
+    transform-style: preserve-3d;
+    transition: transform 0.6s;
+    position: relative;
+  }
+
+  .flip-card.flipped { transform: rotateY(180deg); }
+
+  .flip-card-front, .flip-card-back {
+    position: absolute;
+    width: 150px;
+    height: 100px;
+    backface-visibility: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    font-size: 0.9em;
+    text-align: center;
+    padding: 5px;
+  }
+
+  .flip-card-front { background: #ffdd88; }
+  .flip-card-back { background: #88ccff; transform: rotateY(180deg); }
+
+  #spin-wheel {
+    width: 250px;
+    height: 250px;
+    border-radius: 50%;
+    border: 8px solid #fff;
+    position: relative;
+    overflow: hidden;
+    margin: 20px auto;
+  }
+
+  #spin-wheel div {
+    position: absolute;
+    width: 50%;
+    height: 50%;
+    top: 50%; left: 50%;
+    transform-origin: 0% 0%;
+    text-align: right;
+    padding-right: 10px;
+    box-sizing: border-box;
+    font-size: 0.9em;
+    font-weight: bold;
+  }
+
+  #pointer {
+    width: 20px;
+    height: 20px;
+    background: red;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+  }
+
+  button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-size: 1em;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    background: #4CAF50;
+    color: white;
+    transition: background 0.3s;
+  }
+
+  button:hover { background: #45a049; }
+
+  /* Confetti */
+  .confetti {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    background: gold;
+    top: 0;
+    left: 50%;
+    opacity: 0.7;
+    animation: fall 2s linear forwards;
+  }
+
+  @keyframes fall {
+    to {
+      transform: translateY(500px) rotate(720deg);
+      opacity: 0;
+    }
+  }
+
+  /* Dark Mode Overlay & Cards */
+  .dark-mode::after {
+    background-color: rgba(0,0,0,0.4);
+  }
+
+  .dark-mode h1 { color: #ffcc00; text-shadow: 1px 1px 2px rgba(0,0,0,0.7); }
+  .dark-mode .game-card { background: rgba(50,50,50,0.8); color: #fff; }
+  .dark-mode .game-card:hover { background: rgba(70,70,70,0.85); }
+  .dark-mode .flip-card-front { background: rgba(50,50,50,0.8); color: #fff; }
+  .dark-mode .flip-card-back { background: rgba(80,80,80,0.85); color: #fff; }
+  .dark-mode button { background: #333; color: #ffcc00; }
+  .dark-mode button:hover { background: #444; }
+</style>
+</head>
+<body>
+
+<h1>🎲 Surprise Me! Random Recipe Game</h1>
+
+<div class="game-selection">
+  <div class="game-card" onclick="playClick(); startGame('flip')">Flip Card Game</div>
+  <div class="game-card" onclick="playClick(); startGame('spin')">Spin Wheel Game</div>
+  <div class="game-card" onclick="playClick(); startGame('quiz')">Q/A Game</div>
+  
+  <div class="game-card puzzle-card" onclick="playClick(); startGame('puzzle')">Puzzle Game</div>
+
+</div>
+
+<div id="flip-container"></div>
+<div id="spin-wheel"></div>
+<div id="pointer"></div>
+
+<div id="quiz-container" style="display:none; margin-top:20px;">
+  <h2>Recipe Quiz 🍲</h2>
+  <p id="quiz-question"></p>
+  <div id="quiz-options"></div>
+  <p id="quiz-result" style="font-weight:bold;margin-top:10px;"></p>
+  <button id="next-question" style="margin-top:10px;">Next Question</button>
+
+
+
+</div>
+
+<!-- Puzzle Container -->
+<div id="puzzle-container" style="display:none; margin-top:20px; width: 360px; margin-left:auto; margin-right:auto;"></div>
+<p id="puzzle-message" style="font-weight:bold; text-align:center;"></p>
+<div id="puzzle-recipe" style="text-align:center; font-weight:bold; margin-top:10px;"></div>
+
+
+<button id="back-btn" style="display:none;" onclick="playClick(); backToSelection()">⬅ Back to Game Selection</button>
+
+<!-- Sound effects -->
+<audio id="click-sound" src="click.mp3" preload="auto"></audio>
+<audio id="flip-sound" src="flip.wav" preload="auto"></audio>
+<audio id="wheel-sound" src="wheel.wav" preload="auto"></audio>
+
+<script>
+const recipes = [
+  "pancakes","omelette","sandwich","chapathi","pongal","idli","dosa","poha",
+  "upma","paratha","bread-toast","smoothie","cereal","oats","uttapam","vada",
+  "tea","coffee","pasta","friedrice","salad","pizza","curry","noodles","samosa",
+  "burger","fries","springroll","soup","pakora","cake","cupcake","icecream",
+  "pudding","brownie","gulabjamun","chickencurry","paneerbuttermasala","daltadka","jeerarice","vegbiryani","chickenbiryani","mutterpaneer","rajma","chole","fishcurry","eggcurry","aloogobi","mixveg","naan","roti","chickenfry","vegcutlet","pastalunch",
+  "rasgulla","jalebi","kheer","laddu","barfi","applepie","cheesecake","donut","mousse","halwa","payasam","shrikhand","sandesh","malpua","kulfi","basundi","modak","falooda","rabri","sheerkurma",
+  "chickenparmesan","spaghettibolognese","fajitas","tacobowl","grilledsalmon","chickenalfredo","beefstirfry","chickenparatha","paneertikka","vegmanchurian","fishcurry","chickenfajita",
+  "cornpakora","cheeseballs","cheesesticks","chillipaneer","nachos","chickenwings","mozzarellaballs","vegcutlets","potatopoppers","onionrings","garlicbread","miniquiches"
+];
+
+function playClick() {
+  const sound = document.getElementById('click-sound');
+  sound.currentTime = 0;
+  sound.play();
+}
+
+function startGame(type){
+ 
+// Clear previous puzzle if any
+const puzzleContainer = document.getElementById("puzzle-container");
+puzzleContainer.style.display = 'none';
+puzzleContainer.innerHTML = "";
+document.getElementById("puzzle-message").textContent = "";
+document.getElementById("puzzle-recipe").textContent = "";
+tiles = [];
+dragSrcIndex = null;
+currentPuzzle = null;
+
+
+
+  document.querySelector('.game-selection').style.display = 'none'; 
+  document.getElementById('back-btn').style.display = 'inline-block';
+
+  if(type==='flip'){
+    setupFlipCards();
+  } else if(type==='spin'){
+    setupSpinWheel();
+  } else if(type==='quiz'){
+    setupQuiz();
+  }else if(type==='puzzle'){
+    setupPuzzle();
+}
+
+}
+ function backToSelection() {
+  // Show game selection
+  document.querySelector('.game-selection').style.display = 'flex'; 
+
+  // Hide other game containers
+  document.getElementById('flip-container').style.display = 'none';
+  document.getElementById('spin-wheel').style.display = 'none';
+  document.getElementById('pointer').style.display = 'none';
+  document.getElementById('quiz-container').style.display = 'none';
+  document.getElementById('puzzle-container').style.display = 'none';
+  document.getElementById('puzzle-message').textContent = '';
+  document.getElementById('puzzle-recipe').textContent = '';
+  
+  // Reset puzzle variables
+  tiles = [];
+  dragSrcIndex = null;
+  currentPuzzle = null;
+
+  document.getElementById('back-btn').style.display = 'none';
+}
+ 
+
+
+function setupFlipCards(){
+  const container = document.getElementById('flip-container');
+  container.style.display = 'flex';
+  container.innerHTML = '';
+  for(let i=0;i<4;i++){
+    const card = document.createElement('div');
+    card.className = 'flip-card';
+    card.innerHTML = '<div class="flip-card-front">?</div><div class="flip-card-back"></div>';
+    card.onclick = () => selectFlipCard(card);
+    container.appendChild(card);
+  }
+}
+
+function selectFlipCard(card){
+  if(card.classList.contains('flipped')) return;
+  card.classList.add('flipped');
+  
+  const flipSound = document.getElementById('flip-sound');
+  flipSound.currentTime = 0;
+  flipSound.play();
+
+  const back = card.querySelector('.flip-card-back');
+  const recipeId = recipes[Math.floor(Math.random()*recipes.length)];
+  back.textContent = recipeId.charAt(0).toUpperCase()+recipeId.slice(1);
+
+  launchConfetti();
+
+  setTimeout(()=>{ 
+    playClick(); 
+    localStorage.setItem("selectedRecipe", recipeId);
+    window.location.href = "recipe.html";
+  }, 700);
+}
+
+function setupSpinWheel(){
+  const wheel = document.getElementById('spin-wheel');
+  const pointer = document.getElementById('pointer');
+  wheel.style.display = 'block';
+  pointer.style.display = 'block';
+  wheel.innerHTML = '';
+  const total = recipes.length;
+  const angle = 360/total;
+  recipes.forEach((recipe,i)=>{
+    const div = document.createElement('div');
+    div.textContent = recipe.charAt(0).toUpperCase()+recipe.slice(1);
+    div.style.transform = `rotate(${i*angle}deg)`;
+    div.style.background = `hsl(${i*30}, 70%, 70%)`;
+    wheel.appendChild(div);
+  });
+  wheel.onclick = spinWheel;
+}
+
+function spinWheel(){
+  const wheel = document.getElementById('spin-wheel');
+  const wheelSound = document.getElementById('wheel-sound');
+  wheelSound.currentTime = 0;
+  wheelSound.play();
+
+  const randomIndex = Math.floor(Math.random()*recipes.length);
+  const anglePerRecipe = 360/recipes.length;
+  const targetAngle = 3600 + (randomIndex * anglePerRecipe); 
+  wheel.style.transition = 'transform 4s ease-out';
+  wheel.style.transform = `rotate(${targetAngle}deg)`;
+
+  launchConfetti();
+
+  setTimeout(()=>{
+    playClick();
+    const recipeId = recipes[randomIndex];
+    localStorage.setItem("selectedRecipe", recipeId);
+    window.location.href = "recipe.html";
+  },4000);
+}
+
+function launchConfetti(){
+  for(let i=0;i<30;i++){
+    const confetti = document.createElement('div');
+    confetti.className = 'confetti';
+    confetti.style.left = Math.random()*window.innerWidth + 'px';
+    confetti.style.background = `hsl(${Math.random()*360}, 100%, 50%)`;
+    document.body.appendChild(confetti);
+    setTimeout(()=>{ confetti.remove(); },2000);
+  }
+}
+
+// ------------------- Quiz Game with Checkboxes -------------------
+const quizData = [
+  { question: "Which ingredient is essential in Biryani?", options: ["Chocolate","Rice","Cheese","Ice Cream"], answer:"Rice", recipeId:"chickenbiryani"},
+  { question: "Which recipe is a dessert?", options:["Pizza","Gulabjamun","Burger","Noodles"], answer:"Gulabjamun", recipeId:"gulabjamun"},
+  { question: "Which is made from chickpeas?", options:["Paneer","Rajma","Chole","Cake"], answer:"Chole", recipeId:"chole"},
+  { question: "Which is a popular breakfast?", options:["Idli","Samosa","Fries","Pakora"], answer:"Idli", recipeId:"idli"},
+  { question: "Which is a rice dish?", options:["Pasta","Fried Rice","Bread Toast","Mousse"], answer:"Fried Rice", recipeId:"friedrice"},
+  { question: "Which is made with eggs?", options:["Omelette","Salad","Pizza","Cupcake"], answer:"Omelette", recipeId:"omelette"},
+  { question: "Which is sweet?", options:["Ladoo","Chapathi","Dosa","Poha"], answer:"Ladoo", recipeId:"laddu"},
+  { question: "Which is fried snack?", options:["Samosa","Idli","Upma","Pasta"], answer:"Samosa", recipeId:"samosa"},
+  { question: "Which is an Indian curry?", options:["Paneer Butter Masala","Ice Cream","Donut","Pasta"], answer:"Paneer Butter Masala", recipeId:"paneerbuttermasala"},
+  { question: "Which is a drink?", options:["Tea","Burger","Pizza","Pakora"], answer:"Tea", recipeId:"tea"}
+];
+
+let currentQuestion = null;
+
+function setupQuiz() {
+  document.getElementById('quiz-container').style.display = 'block';
+  showRandomQuestion();
+}
+
+function showRandomQuestion() {
+  const randomIndex = Math.floor(Math.random() * quizData.length);
+  currentQuestion = quizData[randomIndex];
+
+  document.getElementById("quiz-question").textContent = currentQuestion.question;
+
+  const optionsDiv = document.getElementById("quiz-options");
+  optionsDiv.innerHTML = "";
+  document.getElementById("quiz-result").textContent = "";
+
+  // Create checkboxes with space
+  currentQuestion.options.forEach(opt => {
+    const label = document.createElement("label");
+    label.style.display = "block";
+    label.style.margin = "10px 0";
+    label.style.fontWeight = "bold";
+    label.style.cursor = "pointer";
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.value = opt;
+    checkbox.style.marginRight = "10px";
+
+    // Check answer when clicked
+    checkbox.onclick = () => checkQuizAnswer(checkbox);
+
+    label.appendChild(checkbox);
+    label.appendChild(document.createTextNode(opt));
+    optionsDiv.appendChild(label);
+  });
+}
+
+function checkQuizAnswer(selectedCheckbox) {
+  const selected = selectedCheckbox.value;
+  const result = document.getElementById("quiz-result");
+  const allCheckboxes = document.querySelectorAll("#quiz-options input");
+
+  // Disable all checkboxes after one click
+  allCheckboxes.forEach(cb => cb.disabled = true);
+
+  if (selected === currentQuestion.answer) {
+    result.textContent = "✅ Correct! Opening recipe...";
+    result.style.color = "green";
+    launchConfetti();
+
+    setTimeout(() => {
+      playClick();
+      localStorage.setItem("selectedRecipe", currentQuestion.recipeId);
+      window.location.href = "recipe.html";
+    }, 1000);
+  } else {
+    result.textContent = "❌ Wrong! Correct answer: " + currentQuestion.answer;
+    result.style.color = "red";
+  }
+}
+
+// Optional: Reset quiz to show another random question if player clicks "Next Question"
+document.getElementById("next-question").onclick = () => {
+  showRandomQuestion();
+};
+
+
+
+ // ------------------- Puzzle Game (3x3 Tiles) -------------------
+const puzzleImages = [
+  { src: "briyani.webp", name: "Biryani" },
+  { src: "gulabjamun.jpg", name: "Gulab Jamun" },
+  { src: "icecream.jpg", name: "Ice Cream" },
+  { src: "sandwitch.avif", name: "Sandwich" },
+  { src: "springroll.avif", name: "Spring Roll" }
+];
+
+let currentPuzzle = null;
+let tiles = [];
+let dragSrcIndex = null;
+
+function setupPuzzle() {
+  const container = document.getElementById("puzzle-container");
+  const message = document.getElementById("puzzle-message");
+  const recipeNameDiv = document.getElementById("puzzle-recipe");
+
+  container.innerHTML = "";
+  message.textContent = "";
+  recipeNameDiv.textContent = "";
+
+  // Pick a random image
+  const randomIndex = Math.floor(Math.random() * puzzleImages.length);
+  currentPuzzle = puzzleImages[randomIndex];
+
+  // Create 3x3 tiles
+  tiles = [];
+  for (let row = 0; row < 3; row++) {
+    for (let col = 0; col < 3; col++) {
+      tiles.push({ row, col, correctIndex: row * 3 + col });
+    }
+  }
+
+  // Shuffle tiles
+  tiles = tiles.sort(() => Math.random() - 0.5);
+
+  // Render tiles
+  container.style.display = "grid";
+  container.style.gridTemplateColumns = "repeat(3, 120px)";
+  container.style.gridTemplateRows = "repeat(3, 120px)";
+  container.style.gap = "2px";
+  container.style.justifyContent = "center";
+
+  tiles.forEach((tile, index) => {
+    const tileDiv = document.createElement("div");
+    tileDiv.classList.add("puzzle-tile");
+    tileDiv.draggable = true;
+    tileDiv.dataset.index = index;
+
+    tileDiv.style.width = "120px";
+    tileDiv.style.height = "120px";
+    tileDiv.style.backgroundImage = `url(${currentPuzzle.src})`;
+    tileDiv.style.backgroundSize = "360px 360px"; // 3x3 tiles
+    tileDiv.style.backgroundPosition = `-${tile.col * 120}px -${tile.row * 120}px`;
+    tileDiv.style.border = "1px solid #fff";
+    tileDiv.style.cursor = "grab";
+
+    // Drag & Drop
+    tileDiv.ondragstart = (e) => { dragSrcIndex = e.target.dataset.index; };
+    tileDiv.ondragover = (e) => e.preventDefault();
+    tileDiv.ondrop = (e) => {
+      const dragTargetIndex = e.target.dataset.index;
+      if (dragSrcIndex === null || dragTargetIndex === undefined) return;
+
+      // Swap tiles
+      [tiles[dragSrcIndex], tiles[dragTargetIndex]] = [tiles[dragTargetIndex], tiles[dragSrcIndex]];
+      dragSrcIndex = null;
+      renderTiles(); // re-render after swap
+      checkPuzzleSolved();
+    };
+
+    container.appendChild(tileDiv);
+  });
+}
+
+function renderTiles() {
+  const container = document.getElementById("puzzle-container");
+  container.innerHTML = "";
+  tiles.forEach((tile, index) => {
+    const tileDiv = document.createElement("div");
+    tileDiv.classList.add("puzzle-tile");
+    tileDiv.draggable = true;
+    tileDiv.dataset.index = index;
+
+    tileDiv.style.width = "120px";
+    tileDiv.style.height = "120px";
+    tileDiv.style.backgroundImage = `url(${currentPuzzle.src})`;
+    tileDiv.style.backgroundSize = "360px 360px";
+    tileDiv.style.backgroundPosition = `-${tile.col * 120}px -${tile.row * 120}px`;
+    tileDiv.style.border = "1px solid #fff";
+    tileDiv.style.cursor = "grab";
+
+    tileDiv.ondragstart = (e) => { dragSrcIndex = e.target.dataset.index; };
+    tileDiv.ondragover = (e) => e.preventDefault();
+    tileDiv.ondrop = (e) => {
+      const dragTargetIndex = e.target.dataset.index;
+      if (dragSrcIndex === null || dragTargetIndex === undefined) return;
+      [tiles[dragSrcIndex], tiles[dragTargetIndex]] = [tiles[dragTargetIndex], tiles[dragSrcIndex]];
+      dragSrcIndex = null;
+      renderTiles();
+      checkPuzzleSolved();
+    };
+
+    container.appendChild(tileDiv);
+  });
+}
+
+function checkPuzzleSolved() {
+  const message = document.getElementById("puzzle-message");
+  const recipeNameDiv = document.getElementById("puzzle-recipe");
+
+  const solved = tiles.every((tile, index) => tile.correctIndex === index);
+  if (solved) {
+    message.textContent = "🎉 Correct! You completed the puzzle!";
+    launchConfetti();
+    recipeNameDiv.innerHTML = `<img src="${currentPuzzle.src}" style="width:360px;height:360px; margin-top:10px; border-radius:12px;"><br>Recipe: ${currentPuzzle.name}`;
+  }
+}
+
+
+</script>
+
+<script src="dark-mode.js"></script>
+
+</body>
+</html>

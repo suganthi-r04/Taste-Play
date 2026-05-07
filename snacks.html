@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snack Recipes</title>
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    position: relative;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background Image */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url("snack.jpg") no-repeat center center/cover;
+    filter: blur(5px) brightness(0.9);
+    z-index: -1;
+  }
+
+  /* Search Bar Top-Left */
+  .search-container {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 100;
+  }
+
+  #searchBar {
+    padding: 8px 12px;
+    width: 200px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+  }
+
+  .container {
+    text-align: center;
+    padding: 60px 20px 20px; /* padding-top so search bar doesn't overlap heading */
+    position: relative;
+    z-index: 1;
+  }
+
+  h1 {
+    color: #fff;
+    text-shadow: 2px 2px 5px rgba(0,0,0,0.6);
+    margin-bottom: 20px;
+  }
+
+  .items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px;
+  }
+
+  .item {
+    background: rgba(255, 255, 255, 0.85);
+    padding: 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    transition: transform 0.2s, background 0.3s;
+  }
+
+  .item:hover {
+    transform: scale(1.05);
+    background: rgba(255, 250, 240, 0.95);
+  }
+
+  a {
+    display: inline-block;
+    margin-top: 20px;
+    color: #fff;
+    text-decoration: none;
+    font-weight: bold;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
+    cursor: pointer;
+  }
+
+  /* Dark Mode */
+  .dark-mode::before {
+    background-color: rgba(0,0,0,0.4);
+    filter: blur(5px) brightness(0.6);
+  }
+
+  .dark-mode h1 { color: #ffcc00; text-shadow: 1px 1px 2px rgba(0,0,0,0.7); }
+  .dark-mode .item { background: rgba(50,50,50,0.8); color: #fff; }
+  .dark-mode .item:hover { background: rgba(70,70,70,0.85); }
+  .dark-mode a { color: #ffcc00; text-shadow: 1px 1px 2px rgba(0,0,0,0.7); }
+
+</style>
+</head>
+<body>
+
+<!-- Search Bar Top-Left -->
+<div class="search-container">
+  <input type="text" id="searchBar" placeholder="Search snacks..." onkeyup="filterSnacks()">
+</div>
+
+<div class="container">
+  <h1>🍔 Snack Recipes</h1>
+  <div class="items" id="snackItems">
+    <div class="item" onclick="playClick(); openRecipe('samosa')">Samosa</div>
+    <div class="item" onclick="playClick(); openRecipe('burger')">Burger</div>
+    <div class="item" onclick="playClick(); openRecipe('fries')">Fries</div>
+    <div class="item" onclick="playClick(); openRecipe('paneertikka')">Paneer Tikka</div>
+    <div class="item" onclick="playClick(); openRecipe('springroll')">Spring Roll</div>
+    <div class="item" onclick="playClick(); openRecipe('pakora')">Pakora</div>
+    <div class="item" onclick="playClick(); openRecipe('cheesesticks')">Cheese Sticks</div>
+    <div class="item" onclick="playClick(); openRecipe('cornpakora')">Corn Pakora</div>
+    <div class="item" onclick="playClick(); openRecipe('chillipaneer')">Chilli Paneer</div>
+    <div class="item" onclick="playClick(); openRecipe('nachos')">Nachos</div>
+    <div class="item" onclick="playClick(); openRecipe('chickenwings')">Chicken Wings</div>
+    <div class="item" onclick="playClick(); openRecipe('mozzarellaballs')">Mozzarella Balls</div>
+    <div class="item" onclick="playClick(); openRecipe('vegcutlets')">Veg Cutlets</div>
+    <div class="item" onclick="playClick(); openRecipe('potatopoppers')">Potato Poppers</div>
+    <div class="item" onclick="playClick(); openRecipe('onionrings')">Onion Rings</div>
+    <div class="item" onclick="playClick(); openRecipe('garlicbread')">Garlic Bread</div>
+    <div class="item" onclick="playClick(); openRecipe('cheeseballs')">Cheese Balls</div>
+    <div class="item" onclick="playClick(); openRecipe('miniquiches')">Mini Quiches</div>
+  </div>
+
+  <a href="home.html" onclick="playClick()">⬅ Back to Home</a>
+</div>
+
+<audio id="click-sound" src="click.mp3" preload="auto"></audio>
+
+<script>
+function playClick() {
+  const sound = document.getElementById("click-sound");
+  sound.currentTime = 0;
+  sound.play();
+}
+
+function openRecipe(item) {
+  localStorage.setItem("selectedRecipe", item);
+  window.location.href = "recipe.html";
+}
+
+function filterSnacks() {
+  const input = document.getElementById("searchBar").value.toLowerCase();
+  const items = document.getElementById("snackItems").getElementsByClassName("item");
+  for (let i = 0; i < items.length; i++) {
+    const name = items[i].textContent.toLowerCase();
+    items[i].style.display = name.includes(input) ? "" : "none";
+  }
+}
+
+// Apply dark mode if toggled
+if(localStorage.getItem("theme") === "dark"){
+  document.body.classList.add("dark-mode");
+}
+</script>
+<script src="dark-mode.js"></script>
+
+</body>
+</html>

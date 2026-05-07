@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Favorites</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+      background: url('food2.avif') no-repeat center center fixed;
+      background-size: cover;
+      position: relative;
+      transition: color 0.3s;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      backdrop-filter: blur(6px);
+      background-color: rgba(255, 255, 255, 0.2);
+      pointer-events: none;
+      z-index: 0;
+      transition: background-color 0.3s;
+    }
+
+    body > * { position: relative; z-index: 1; }
+
+    h1 {
+      color: #fff;
+      text-shadow: 2px 2px 5px rgba(0,0,0,0.6);
+    }
+
+    /* Updated grid to allow unlimited cards */
+    .favorites-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 20px;
+      margin-top: 30px;
+      grid-auto-rows: auto;
+      justify-items: center;
+    }
+
+    .fav-card {
+      background: rgba(255,255,255,0.85);
+      border-radius: 15px;
+      padding: 10px;
+      cursor: pointer;
+      transition: transform 0.3s, box-shadow 0.3s, background 0.3s;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+      position: relative;
+    }
+
+    .fav-card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+    }
+
+    .fav-card img {
+      width: 100%;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 10px;
+    }
+
+    .fav-card h3 {
+      margin: 10px 0 0 0;
+      font-size: 1em;
+    }
+
+    .remove-btn {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: red;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 25px;
+      height: 25px;
+      font-size: 16px;
+      cursor: pointer;
+      line-height: 20px;
+    }
+
+    .remove-btn:hover { background: darkred; }
+
+    .btn {
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: background 0.3s;
+    }
+
+    .btn:hover { background-color: #45a049; }
+
+    #clear-all-btn {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      background-color: rgba(255, 0, 0, 0.8);
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      z-index: 2;
+      font-size: 0.9em;
+      transition: background 0.3s;
+    }
+
+    #clear-all-btn:hover { background-color: red; }
+
+    /* Dark Mode */
+    .dark-mode::after {
+      background-color: rgba(0,0,0,0.4);
+    }
+
+    .dark-mode h1, .dark-mode p {
+      color: #ffcc00;
+      text-shadow:1px 1px 2px rgba(0,0,0,0.7);
+    }
+
+    .dark-mode .fav-card {
+      background: rgba(50,50,50,0.8);
+      color: #fff;
+    }
+
+    .dark-mode .fav-card:hover {
+      background: rgba(70,70,70,0.85);
+    }
+
+    .dark-mode #clear-all-btn {
+      background-color: rgba(200,0,0,0.8);
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+<h1>❤️ Your Favorites</h1>
+<div class="favorites-grid" id="favorites-grid">
+  <!-- Favorite recipes will appear here -->
+</div>
+
+<button id="clear-all-btn">🗑 Clear All</button>
+<button onclick="playClick(); goHome()" class="btn">⬅ Back to Home</button>
+
+<audio id="click-sound" src="click.mp3" preload="auto"></audio>
+
+<script>
+  // Play click sound
+  function playClick() {
+    const sound = document.getElementById("click-sound");
+    sound.currentTime = 0;
+    sound.play();
+  }
+
+  // Recipe dataset
+  const recipes = {
+    pancakes: { title: "Pancakes", img: "breakfast.webp" },
+    omelette: { title: "Omelette", img: "breakfast.webp" },
+    sandwich: { title: "Sandwich", img: "breakfast.webp" },
+    chapathi:  { title: "Chapathi", img: "breakfast.webp"},
+    pongal: { title: "Pongal", img: "breakfast.webp"},
+    idli: { title: "Idli", img: "breakfast.webp" },
+dosa: { title: "Dosa", img: "breakfast.webp" },
+poha: { title: "Poha", img: "breakfast.webp" },
+upma: { title: "Upma", img: "breakfast.webp" },
+paratha: { title: "Paratha", img: "breakfast.webp" },
+breadtoast: { title: "Bread Toast", img: "breakfast.webp" },
+smoothie: { title: "Fruit Smoothie", img: "breakfast.webp" },
+cereal: { title: "Cereal & Milk", img: "breakfast.webp" },
+oats: { title: "Oats Porridge", img: "breakfast.webp" },
+uttapam: { title: "Uttapam", img: "breakfast.webp" },
+vada: { title: "Medu Vada", img: "breakfast.webp" },
+tea: { title: "Masala Chai", img: "breakfast.webp" },
+coffee: { title: "Filter Coffee", img: "breakfast.webp" },
+
+    pasta: { title: "Pasta", img: "lunch.jpg" },
+    friedrice: { title: "Fried Rice", img: "lunch.jpg" },
+    salad: { title: "Salad", img: "lunch.jpg" },
+    biryani: { title: "Biryani", img: "lunch.jpg"},
+    meals: { title: "Meals", img: "lunch.jpg"},
+    
+    pizza: { title: "Pizza", img: "dinner.jpg" },
+    curry: { title: "Curry", img: "dinner.jpg" },
+    noodles: { title: "Noodles", img: "dinner.jpg" },
+    grilledchicken: { title: "Grilled Chicken", img: "dinner.jpg"},
+    chickenparmesan: { title: "Chicken Parmesan", img: "dinner.jpg" },
+spaghettibolognese: { title: "Spaghetti Bolognese", img: "dinner.jpg" },
+fajitas: { title: "Fajitas", img: "dinner.jpg" },
+tacobowl: { title: "Taco Bowl", img: "dinner.jpg" },
+grilledsalmon: { title: "Grilled Salmon", img: "dinner.jpg" },
+chickenalfredo: { title: "Chicken Alfredo", img: "dinner.jpg" },
+beefstirfry: { title: "Beef Stir Fry", img: "dinner.jpg" },
+chickenparatha: { title: "Chicken Paratha", img: "dinner.jpg" },
+paneertikka: { title: "Paneer Tikka Masala", img: "dinner.jpg" },
+vegmanchurian: { title: "Veg Manchurian", img: "dinner.jpg" },
+fishcurry: { title: "Fish Curry", img: "dinner.jpg" },
+chickenfajita: { title: "Chicken Fajita", img: "dinner.jpg" },
+
+    samosa: { title: "Samosa", img: "snack.jpg" },
+    burger: { title: "Burger", img: "snack.jpg" },
+    fries: { title: "Fries", img: "snack.jpg" },
+    cornpakora: { title: "Corn Pakora", img: "snack.jpg" },
+cheeseballs: { title: "Cheese Balls", img: "snack.jpg" },
+cheesesticks: { title: "Cheese Sticks", img: "snack.jpg" },
+chillipaneer: { title: "Chilli Paneer", img: "snack.jpg" },
+nachos: { title: "Nachos", img: "snack.jpg" },
+chickenwings: { title: "Chicken Wings", img: "snack.jpg" },
+mozzarellaballs: { title: "Mozzarella Balls", img: "snack.jpg" },
+vegcutlets: { title: "Veg Cutlets", img: "snack.jpg" },
+potatopoppers: { title: "Potato Poppers", img: "snack.jpg" },
+onionrings: { title: "Onion Rings", img: "snack.jpg" },
+garlicbread: { title: "Garlic Bread", img: "snack.jpg" },
+miniquiches: { title: "Mini Quiches", img: "snack.jpg" },
+
+    icecream: { title: "Ice Cream", img: "dessert.jpg" },
+    cake: { title: "Cake", img: "dessert.jpg" },
+    brownie: { title: "Brownie", img: "dessert.jpg" },
+    pudding: { title: "Pudding", img: "dessert.jpg" },
+cupcake: { title: "Cupcake", img: "dessert.jpg" },
+gulabjamun: { title: "Gulab Jamun", img: "dessert.jpg" },
+rasgulla: { title: "Rasgulla", img: "dessert.jpg" },
+jalebi: { title: "Jalebi", img: "dessert.jpg" },
+kheer: { title: "Kheer", img: "dessert.jpg" },
+laddu: { title: "Laddu", img: "dessert.jpg" },
+barfi: { title: "Barfi", img: "dessert.jpg" },
+applepie: { title: "Apple Pie", img: "dessert.jpg" },
+cheesecake: { title: "Cheesecake", img: "dessert.jpg" },
+donut: { title: "Donut", img: "dessert.jpg" },
+mousse: { title: "Chocolate Mousse", img: "dessert.jpg" },
+halwa: { title: "Carrot Halwa", img: "dessert.jpg" },
+
+    chickencurry: { title: "Chicken Curry", img: "lunch.jpg" },
+paneerbuttermasala: { title: "Paneer Butter Masala", img: "lunch.jpg" },
+daltadka: { title: "Dal Tadka", img: "lunch.jpg" },
+jeerarice: { title: "Jeera Rice", img: "lunch.jpg" },
+vegbiryani: { title: "Veg Biryani", img: "lunch.jpg" },
+chickenbiryani: { title: "Chicken Biryani", img: "lunch.jpg" },
+mutterpaneer: { title: "Mutter Paneer", img: "lunch.jpg" },
+rajma: { title: "Rajma", img: "lunch.jpg" },
+chole: { title: "Chole", img: "lunch.jpg" },
+fishcurry: { title: "Fish Curry", img: "lunch.jpg" },
+eggcurry: { title: "Egg Curry", img: "lunch.jpg" },
+aloogobi: { title: "Aloo Gobi", img: "lunch.jpg" },
+mixveg: { title: "Mix Veg", img: "lunch.jpg" },
+naan: { title: "Naan", img: "lunch.jpg" },
+roti: { title: "Roti", img: "lunch.jpg" },
+chickenfry: { title: "Chicken Fry", img: "lunch.jpg" },
+vegcutlet: { title: "Veg Cutlet", img: "lunch.jpg" },
+pastalunch: { title: "Pasta", img: "lunch.jpg" }
+
+  };
+
+  let favorites = JSON.parse(localStorage.getItem("favoriteRecipes")) || [];
+  const grid = document.getElementById("favorites-grid");
+
+  function renderFavorites() {
+    grid.innerHTML = "";
+    if(favorites.length === 0){
+      grid.innerHTML = "<p>No favorites yet. Go add some recipes!</p>";
+      return;
+    }
+
+    favorites.forEach(id => {
+      if(recipes[id]){
+        const card = document.createElement("div");
+        card.className = "fav-card";
+
+        card.innerHTML = `
+          <img src="${recipes[id].img}" alt="${recipes[id].title}">
+          <h3>${recipes[id].title}</h3>
+          <button class="remove-btn">❌</button>
+        `;
+
+        // Open recipe
+        card.querySelector("img").addEventListener("click", ()=>{
+          playClick();
+          localStorage.setItem("selectedRecipe", id);
+          window.location.href="recipe.html";
+        });
+        card.querySelector("h3").addEventListener("click", ()=>{
+          playClick();
+          localStorage.setItem("selectedRecipe", id);
+          window.location.href="recipe.html";
+        });
+
+        // Remove from favorites
+        card.querySelector(".remove-btn").addEventListener("click", e=>{
+          e.stopPropagation();
+          playClick();
+          favorites = favorites.filter(favId => favId !== id);
+          localStorage.setItem("favoriteRecipes", JSON.stringify(favorites));
+          renderFavorites();
+        });
+
+        grid.appendChild(card);
+      }
+    });
+  }
+
+  renderFavorites();
+
+  document.getElementById("clear-all-btn").addEventListener("click", ()=>{
+    playClick();
+    if(confirm("Are you sure you want to clear all favorites?")){
+      favorites = [];
+      localStorage.setItem("favoriteRecipes", JSON.stringify(favorites));
+      renderFavorites();
+    }
+  });
+
+  function goHome(){ window.location.href="home.html"; }
+</script>
+
+<script src="dark-mode.js"></script>
+</body>
+</html>
